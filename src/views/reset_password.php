@@ -1,0 +1,1 @@
+<form method='post'><input name='code'><button>Reset Password</button></form>

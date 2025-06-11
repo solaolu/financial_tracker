@@ -1,0 +1,1 @@
+<form method='post'><input name='budget'><input name='expenses'><button>Submit</button></form>
