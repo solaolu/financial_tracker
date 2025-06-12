@@ -11,8 +11,9 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS finance (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     month TEXT,
-    budget REAL,
+    income REAL,
     expenses REAL,
+    is_recurring INTEGER DEFAULT 0,
     FOREIGN KEY(user_id) REFERENCES users(id)
 )");
 ?>

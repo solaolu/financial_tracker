@@ -14,15 +14,5 @@ class User {
         if ($user && password_verify($password, $user['password'])) return $user;
         return false;
     }
-    public static function resetPassword($username, $code, $newPassword) {
-        global $pdo;
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND reset_code = ?");
-        $stmt->execute([$username, $code]);
-        if ($stmt->fetch()) {
-            $stmt = $pdo->prepare("UPDATE users SET password = ?, reset_code = NULL WHERE username = ?");
-            return $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $username]);
-        }
-        return false;
-    }
 }
 ?>

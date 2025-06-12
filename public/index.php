@@ -1,49 +1,53 @@
 <?php
 session_start();
-require_once __DIR__ . '/../src/models/User.php';
 require_once __DIR__ . '/../src/models/Finance.php';
-$action = $_GET['action'] ?? 'login';
-switch ($action) {
-    case 'register':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            User::register($_POST['username'], $_POST['password']);
-            header('Location: index.php?action=login');
-            exit;
-        }
-        include '../src/views/register.php';
-        break;
-    case 'login':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $user = User::login($_POST['username'], $_POST['password']);
-            if ($user) {
-                $_SESSION['user'] = $user;
-                header('Location: index.php?action=dashboard');
-                exit;
-            } else {
-                $error = "Invalid login.";
+if (!isset($_SESSION['user'])) { header("Location: /login.php"); exit; }
+$latest = Finance::getLatestMonth($_SESSION['user']['id']);
+$all = Finance::getByUser($_SESSION['user']['id']);
+?><link rel="stylesheet" href="/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="container">
+<h2>Dashboard</h2>
+<p>Welcome, <?= $_SESSION['user']['username'] ?> | <a href="/logout.php">Logout</a></p>
+<a href="/finance.php">+ Add Monthly Record</a>
+<?php if ($latest): ?>
+<h3>Latest: <?= htmlspecialchars($latest['month']) ?></h3>
+<canvas id="pieChart" width="400" height="400"></canvas>
+<script>
+const ctx = document.getElementById('pieChart').getContext('2d');
+new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: ['Income', 'Expenses'],
+        datasets: [{
+            data: [<?= $latest['income'] ?>, <?= $latest['expenses'] ?>],
+            backgroundColor: ['#4CAF50', '#f44336']
+        }]
+    }
+});
+</script>
+<?php endif; ?>
+<h3>History</h3>
+<canvas id="barChart" height="100"></canvas>
+<script>
+const btx = document.getElementById('barChart').getContext('2d');
+new Chart(btx, {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_column($all, 'month')) ?>,
+        datasets: [
+            {
+                label: 'Income',
+                data: <?= json_encode(array_column($all, 'income')) ?>,
+                backgroundColor: '#4CAF50'
+            },
+            {
+                label: 'Expenses',
+                data: <?= json_encode(array_column($all, 'expenses')) ?>,
+                backgroundColor: '#f44336'
             }
-        }
-        include '../src/views/login.php';
-        break;
-    case 'logout':
-        session_destroy();
-        header('Location: index.php');
-        break;
-    case 'finance':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            Finance::save($_SESSION['user']['id'], $_POST['month'], $_POST['budget'], $_POST['expenses']);
-        }
-        header('Location: index.php?action=dashboard');
-        break;
-    case 'dashboard':
-        if (!isset($_SESSION['user'])) {
-            header('Location: index.php?action=login');
-            exit;
-        }
-        $data = Finance::getByUser($_SESSION['user']['id']);
-        include '../src/views/dashboard.php';
-        break;
-    default:
-        header('Location: index.php?action=login');
-}
-?>
+        ]
+    }
+});
+</script>
+</div>
